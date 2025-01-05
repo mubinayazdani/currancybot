@@ -23,7 +23,7 @@ def setup_admin_panel(bot):
     @bot.message_handler(func=lambda message: is_admin(message.from_user.id) and message.text == "📋 تعداد کاربران")
     def show_user_count(message):
         try:
-            conn = sqlite3.connect('btnc.db')  
+            conn = sqlite3.connect('btcn.db')  
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) FROM users")
             user_count = cursor.fetchone()[0]
@@ -33,25 +33,42 @@ def setup_admin_panel(bot):
             bot.reply_to(message, "⚠️ خطایی رخ داد.")
             print(f"Error: {e}")
 
-    # @bot.message_handler(func=lambda message: is_admin(message.from_user.id) and message.text == "📊 تعداد درخواست‌ها")
-    # def show_user_requests(message):
+    @bot.message_handler(func=lambda message: is_admin(message.from_user.id) and message.text == "📊 تعداد درخواست‌ها")
+    def show_total_requests(message):
+        try:
+            conn = sqlite3.connect('btcn.db')  
+            cursor = conn.cursor()
+            cursor.execute("SELECT SUM(request) FROM users")
+            total_requests = cursor.fetchone()[0]
+            conn.close()
+
+            if total_requests is not None:
+                bot.reply_to(message, f"📊 تعداد کل درخواست‌ها: {total_requests}")
+            else:
+                bot.reply_to(message, "📭 هنوز هیچ درخواستی ثبت نشده است.")
+        except Exception as e:
+            bot.reply_to(message, "⚠️ خطایی رخ داد.")
+            print(f"Error: {e}")
+
+    # @bot.message_handler(func=lambda message: is_admin(message.from_user.id) and message.text == "📛 قفل چنل")
+    # def lock_channel(message):
     #     try:
-    #         conn = sqlite3.connect('btnc.db') 
+    #     # ذخیره وضعیت قفل بودن چنل در پایگاه داده یا فایل
+    #         conn = sqlite3.connect('btcn.db')
     #         cursor = conn.cursor()
-    #         cursor.execute("SELECT id, requests FROM users")
-    #         rows = cursor.fetchall()
+        
+    #     # به‌روز رسانی وضعیت قفل چنل در پایگاه داده
+    #         cursor.execute("UPDATE settings SET channel_locked = 1 WHERE id = 1")
+    #         conn.commit()
     #         conn.close()
-            
-    #         if rows:
-    #             response = "📊 تعداد درخواست‌ها:\n\n"
-    #             for row in rows:
-    #                 response += f"👤 کاربر {row[0]}: {row[1]} درخواست\n"
-    #             bot.reply_to(message, response)
-    #         else:
-    #             bot.reply_to(message, "📭 هیچ کاربری یافت نشد.")
+
+    #         bot.reply_to(message, "✅ چنل قفل شد. کاربران نمی‌توانند درخواست ارسال کنند.")
+
     #     except Exception as e:
-    #         bot.reply_to(message, "⚠️ خطایی رخ داد.")
+    #         bot.reply_to(message, "⚠️ خطا در قفل کردن چنل.")
     #         print(f"Error: {e}")
+
+
 
     @bot.message_handler(func=lambda message: is_admin(message.from_user.id) and message.text == "⏹ خروج از پنل")
     def exit_admin_panel(message):

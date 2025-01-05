@@ -1,11 +1,98 @@
+# import sqlite3
+# from datetime import datetime
+
+# DB_NAME = "btcn.db"
+
+# def connect():
+#     return sqlite3.connect(DB_NAME)
+
+
+# def create_tables():
+#     with connect() as conn:
+#         cursor = conn.cursor()
+#         cursor.execute("""
+#             CREATE TABLE IF NOT EXISTS users (
+#                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+#                 telegram_id INTEGER NOT NULL UNIQUE,
+#                 username TEXT,
+#                 request INTEGER DEFAULT 0,
+#                 joined_date DATETIME DEFAULT CURRENT_TIMESTAMP
+#             )
+#         """)
+#         cursor.execute("""
+#             CREATE TABLE IF NOT EXISTS alerts (
+#                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+#                 user_id INTEGER,
+#                 coin TEXT,
+#                 target_price REAL,
+#                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+#                 FOREIGN KEY (user_id) REFERENCES users (id)
+#             )
+#         """)
+#         conn.commit()
+
+# def add_user(telegram_id, username):
+#     with connect() as conn:
+#         cursor = conn.cursor()
+#         cursor.execute("""
+#             INSERT OR IGNORE INTO users (telegram_id, username) VALUES (?, ?)
+#         """, (telegram_id, username))
+#         conn.commit()
+
+# def get_user(telegram_id):
+#     with connect() as conn:
+#         cursor = conn.cursor()
+#         cursor.execute("""
+#             SELECT * FROM users WHERE telegram_id = ?
+#         """, (telegram_id,))
+#         return cursor.fetchone()
+
+# def increment_user_requests(user_id):
+#         try:
+#             conn = sqlite3.connect('btcn.db')
+#             cursor = conn.cursor()
+
+#             # بررسی اینکه آیا کاربر در جدول وجود دارد یا نه
+#             cursor.execute("SELECT request FROM users WHERE id = ?", (user_id,))
+#             result = cursor.fetchone()
+
+#             if result is not None:
+#                 # اگر کاربر وجود دارد، شمارنده را افزایش دهید
+#                 cursor.execute("UPDATE users SET request = request + 1 WHERE id = ?", (user_id,))
+#             else:
+#                 # اگر کاربر وجود ندارد، یک رکورد جدید ایجاد کنید
+#                 cursor.execute("INSERT INTO users (id, request) VALUES (?, ?)", (user_id, 1))
+
+#             conn.commit()
+#             conn.close()
+#         except Exception as e:
+#             print(f"Error updating request: {e}")
+# # def add_alert(user_id, coin, target_price):
+# #     with connect() as conn:
+# #         cursor = conn.cursor()
+# #         cursor.execute("""
+# #             INSERT INTO alerts (user_id, coin, target_price) VALUES (?, ?, ?)
+# #         """, (user_id, coin, target_price))
+# #         conn.commit()
+
+# # def get_alerts():
+# #     with connect() as conn:
+# #         cursor = conn.cursor()
+# #         cursor.execute("""
+# #             SELECT * FROM alerts
+# #         """)
+# #         return cursor.fetchall()
+
+
 import sqlite3
 from datetime import datetime
 
-DB_NAME = "btnc.db"
+DB_NAME = "btcn.db"
 
 def connect():
-    return sqlite3.connect(DB_NAME)
-
+    conn = sqlite3.connect(DB_NAME)
+    conn.execute("PRAGMA busy_timeout = 3000")  # timeout برای قفل دیتابیس
+    return conn
 
 def create_tables():
     with connect() as conn:
@@ -15,6 +102,7 @@ def create_tables():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 telegram_id INTEGER NOT NULL UNIQUE,
                 username TEXT,
+                request INTEGER DEFAULT 0,
                 joined_date DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -46,18 +134,23 @@ def get_user(telegram_id):
         """, (telegram_id,))
         return cursor.fetchone()
 
-# def add_alert(user_id, coin, target_price):
-#     with connect() as conn:
-#         cursor = conn.cursor()
-#         cursor.execute("""
-#             INSERT INTO alerts (user_id, coin, target_price) VALUES (?, ?, ?)
-#         """, (user_id, coin, target_price))
-#         conn.commit()
+def increment_user_requests(user_id):
+    try:
+        conn = connect()  # استفاده از کانکشن جدید
+        cursor = conn.cursor()
 
-# def get_alerts():
-#     with connect() as conn:
-#         cursor = conn.cursor()
-#         cursor.execute("""
-#             SELECT * FROM alerts
-#         """)
-#         return cursor.fetchall()
+        # بررسی اینکه آیا کاربر در جدول وجود دارد یا نه
+        cursor.execute("SELECT request FROM users WHERE telegram_id = ?", (user_id,))
+        result = cursor.fetchone()
+
+        if result is not None:
+            # اگر کاربر وجود دارد، شمارنده را افزایش دهید
+            cursor.execute("UPDATE users SET request = request + 1 WHERE telegram_id = ?", (user_id,))
+        else:
+            # اگر کاربر وجود ندارد، یک رکورد جدید ایجاد کنید
+            cursor.execute("INSERT INTO users (telegram_id, request) VALUES (?, ?)", (user_id, 1))  # telegram_id باید باشد
+
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error updating request: {e}")

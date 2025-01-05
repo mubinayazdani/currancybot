@@ -1,5 +1,5 @@
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
-from database import add_user, get_user, create_tables
+from database import add_user, increment_user_requests, create_tables
 import matplotlib.pyplot as plt
 from datetime import datetime
 import numpy as np
@@ -12,7 +12,7 @@ import io
 create_tables()
 
 
-API_TOKEN = '7633590311:AAF-f5LfHg5bb2R8cX3quvX17nvf3f3F2Pc'
+API_TOKEN = ''
 NEWS_API_KEY = '565f2b98562f42c5ba010970199d4cc0'  
 CHANNEL_USERNAME = 'flork_ir'
 bot = telebot.TeleBot(API_TOKEN)
@@ -229,6 +229,9 @@ def handle_message(message):
     if not can_user_request(user_id):
         bot.send_message(message.chat.id, "⚠️ شما به حد مجاز درخواست‌های امروز رسیده‌اید. لطفاً فردا دوباره امتحان کنید.")
         return
+    
+    # increment_user_requests(user_id)
+
 
     if message.text == "💰 دریافت قیمت":
         bot.send_message(message.chat.id, "لطفاً نام ارز دیجیتال را وارد کنید:")
@@ -264,6 +267,8 @@ def get_usd_to_irr():
 # def get_price(message):
 
 def get_price(message):
+    user_id = message.chat.id
+    increment_user_requests(user_id)
     try:
         args = message.text.strip()
         args = convert_currency_name(args)
@@ -293,6 +298,9 @@ def get_price(message):
 #getting 24h update function
 
 def get_24h(message):
+
+    user_id = message.chat.id
+    increment_user_requests(user_id)
     try:
         args = message.text.strip()
         args = convert_currency_name(args)
@@ -312,6 +320,8 @@ def get_24h(message):
 #comparing prices function
 
 def compare_prices(message):
+    user_id = message.chat.id
+    increment_user_requests(user_id)
     try:
         coins = message.text.strip().split()
         
@@ -350,6 +360,8 @@ def compare_prices(message):
 alerts = {}
 
 def set_price_alert(message):
+    user_id = message.chat.id
+    increment_user_requests(user_id)
     try:
         args = message.text.split()
         coin = convert_currency_name(args[0])
@@ -369,6 +381,8 @@ def set_price_alert(message):
 #getting news function
 
 def get_news(message):
+    user_id = message.chat.id
+    increment_user_requests(user_id)
     try:
         url = f'https://newsapi.org/v2/everything?q=cryptocurrency&apiKey={NEWS_API_KEY}'
         response = requests.get(url)
@@ -391,6 +405,8 @@ def get_news(message):
 #getting chart picture
 
 def plot_price_chart(message):
+    user_id = message.chat.id
+    increment_user_requests(user_id)
     try:
         coin = convert_currency_name(message.text.strip())
         url = HISTORY_URL.format(coin)
